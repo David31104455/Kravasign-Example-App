@@ -18,19 +18,29 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build IPA (no code signing)
-        run: flutter build ios --no-codesign
+      - name: Build iOS App (release, no code sign)
+        run: flutter build ios --release --obfuscate --split-debug-info=build/symbols --no-codesign
 
-      - name: Prepare IPA Payload folder
+      - name: Strip Flutter.framework architectures
+        run: |
+          FILE=build/ios/iphoneos/Runner.app/Frameworks/Flutter.framework/Flutter
+          echo "Before:"
+          lipo -info "$FILE"
+          lipo -remove x86_64 -output "$FILE" "$FILE" || true
+          lipo -remove armv7 -output "$FILE" "$FILE" || true
+          echo "After:"
+          lipo -info "$FILE"
+
+      - name: Create IPA folder
         run: |
           mkdir -p Payload
           cp -r build/ios/iphoneos/Runner.app Payload/
 
-      - name: Create IPA file
-        run: zip -r KravasignApp.ipa Payload
+      - name: Zip IPA
+        run: zip -r Kravasign.ipa Payload/
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
           name: Kravasign-iOS-Build
-          path: KravasignApp.ipa
+          path: Kravasign.ipa
