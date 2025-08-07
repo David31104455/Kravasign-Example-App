@@ -18,19 +18,11 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build iOS (Release + Obfuscation)
+      - name: Build iOS App (release, no code sign)
         run: flutter build ios --release --obfuscate --split-debug-info=build/symbols --no-codesign
 
-      - name: Create IPA folder structure
+      - name: Strip Flutter.framework architectures
         run: |
-          mkdir -p Payload
-          cp -r build/ios/iphoneos/Runner.app Payload/
-
-      - name: Zip to IPA
-        run: zip -r Kravasign.ipa Payload/
-
-      - name: Upload IPA artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Kravasign-iOS-Build
-          path: Kravasign.ipa
+          FILE=build/ios/iphoneos/Runner.app/Frameworks/Flutter.framework/Flutter
+          echo "Before:"
+          lipo -info
